@@ -2,6 +2,8 @@ package io.github.cvn.spigotmappingsdownloader;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.github.cvn.spigotmappingsdownloader.json.BuildDataInfo;
+import io.github.cvn.spigotmappingsdownloader.json.VersionData;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.RefSpec;

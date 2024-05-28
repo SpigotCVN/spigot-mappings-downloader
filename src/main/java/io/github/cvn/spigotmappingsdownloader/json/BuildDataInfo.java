@@ -1,4 +1,4 @@
-package io.github.cvn.spigotmappingsdownloader;
+package io.github.cvn.spigotmappingsdownloader.json;
 
 public class BuildDataInfo {
     private final String minecraftVersion;
