@@ -2,12 +2,14 @@ package io.github.cvn.spigotmappingsdownloader;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.Arrays;
+
 public class VersionData {
-    private String name;
-    private String description;
-    private RefsData refs;
-    private int toolsVersion;
-    private int[] javaVersions;
+    private final String name;
+    private final String description;
+    private final RefsData refs;
+    private final int toolsVersion;
+    private final int[] javaVersions;
 
     public VersionData(String name, String description, RefsData refs, int toolsVersion, int[] javaVersions) {
         this.name = name;
@@ -37,15 +39,26 @@ public class VersionData {
         return javaVersions;
     }
 
+    @Override
+    public String toString() {
+        return "VersionData{" +
+                "name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", refs=" + refs +
+                ", toolsVersion=" + toolsVersion +
+                ", javaVersions=" + Arrays.toString(javaVersions) +
+                '}';
+    }
+
     public static class RefsData {
         @SerializedName("BuildData")
-        private String buildData;
+        private final String buildData;
         @SerializedName("Bukkit")
-        private String bukkit;
+        private final String bukkit;
         @SerializedName("CraftBukkit")
-        private String craftBukkit;
+        private final String craftBukkit;
         @SerializedName("Spigot")
-        private String spigot;
+        private final String spigot;
 
         public RefsData(String buildData, String bukkit, String craftBukkit, String spigot) {
             this.buildData = buildData;
@@ -68,6 +81,16 @@ public class VersionData {
 
         public String getSpigot() {
             return spigot;
+        }
+
+        @Override
+        public String toString() {
+            return "RefsData{" +
+                    "buildData='" + buildData + '\'' +
+                    ", bukkit='" + bukkit + '\'' +
+                    ", craftBukkit='" + craftBukkit + '\'' +
+                    ", spigot='" + spigot + '\'' +
+                    '}';
         }
     }
 }
