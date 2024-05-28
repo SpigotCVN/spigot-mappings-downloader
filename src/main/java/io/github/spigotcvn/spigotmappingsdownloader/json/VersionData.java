@@ -1,4 +1,4 @@
-package io.github.cvn.spigotmappingsdownloader.json;
+package io.github.spigotcvn.spigotmappingsdownloader.json;
 
 import com.google.gson.annotations.SerializedName;
 

@@ -2,6 +2,9 @@ plugins {
     id 'java'
 }
 
+group = "io.github.spigotcvn"
+version = "1.0-SNAPSHOT"
+
 repositories {
     mavenCentral()
 }
@@ -13,6 +16,6 @@ dependencies {
 
 jar {
     manifest {
-        attributes 'Main-Class': 'io.github.cvn.spigotmappingsdownloader.Main'
+        attributes 'Main-Class': 'io.github.spigotcvn.spigotmappingsdownloader.Main'
     }
 }

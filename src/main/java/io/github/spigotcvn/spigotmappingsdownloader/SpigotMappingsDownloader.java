@@ -1,9 +1,9 @@
-package io.github.cvn.spigotmappingsdownloader;
+package io.github.spigotcvn.spigotmappingsdownloader;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import io.github.cvn.spigotmappingsdownloader.json.BuildDataInfo;
-import io.github.cvn.spigotmappingsdownloader.json.VersionData;
+import io.github.spigotcvn.spigotmappingsdownloader.json.BuildDataInfo;
+import io.github.spigotcvn.spigotmappingsdownloader.json.VersionData;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.RefSpec;
@@ -12,7 +12,7 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-public class MappingsDownloader {
+public class SpigotMappingsDownloader {
     private static final String VERSIONS_URL = "https://hub.spigotmc.org/versions/%s.json";
     public static final String BUILDDATA_REPO = "https://hub.spigotmc.org/stash/scm/spigot/builddata.git";
 
@@ -23,7 +23,7 @@ public class MappingsDownloader {
             .setPrettyPrinting()
             .create();
 
-    public MappingsDownloader(String rev) {
+    public SpigotMappingsDownloader(String rev) {
         this.rev = rev;
         this.versionInfo = null;
         this.gitClient = null;

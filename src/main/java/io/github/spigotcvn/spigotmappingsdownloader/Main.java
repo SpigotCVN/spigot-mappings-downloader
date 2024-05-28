@@ -1,4 +1,4 @@
-package io.github.cvn.spigotmappingsdownloader;
+package io.github.spigotcvn.spigotmappingsdownloader;
 
 import java.io.File;
 
@@ -6,7 +6,7 @@ public class Main {
     public static void main(String[] args) {
         String version = "1.12.2";
 
-        MappingsDownloader mappinger = new MappingsDownloader(version);
+        SpigotMappingsDownloader mappinger = new SpigotMappingsDownloader(version);
         System.out.println(mappinger.getVersionData().toString());
 
         File[] files = mappinger.downloadMappings(false);
