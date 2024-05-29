@@ -9,10 +9,13 @@ public class Main {
         SpigotMappingsDownloader mappinger = new SpigotMappingsDownloader(version);
         System.out.println(mappinger.getVersionData().toString());
 
-        File[] files = mappinger.downloadMappings(false);
-        for(File file : files) {
-            if(!file.exists()) continue;
-            System.out.println(file.getName());
+        MappingFile[] files = mappinger.downloadMappings(false);
+        for(MappingFile file : files) {
+            if(!file.getFile().exists()) continue;
+            System.out.println(file.getFileType());
+            System.out.println(file.getType());
+            System.out.println(file.getFile().getName());
+            System.out.println();
         }
     }
 }

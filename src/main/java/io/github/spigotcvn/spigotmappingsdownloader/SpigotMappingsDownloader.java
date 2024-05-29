@@ -55,7 +55,7 @@ public class SpigotMappingsDownloader {
         return versionInfo;
     }
 
-    public File[] downloadMappings(boolean deleteIfExists) {
+    public MappingFile[] downloadMappings(boolean deleteIfExists) {
         VersionData versionData = getVersionData();
         if(versionData == null) {
             return null;
@@ -72,11 +72,10 @@ public class SpigotMappingsDownloader {
                 String infoData = readFromFile(new File(buildDataDir, "info.json"));
 
                 BuildDataInfo buildDataInfo = gson.fromJson(infoData, BuildDataInfo.class);
-                return new File[] {
-                        new File(mappingsDir, buildDataInfo.getClassMappings()),
-                        new File(mappingsDir, buildDataInfo.getMemberMappings()),
-                        new File(mappingsDir, buildDataInfo.getPackageMappings()),
-                        new File(mappingsDir, buildDataInfo.getAccessTransforms())
+                return new MappingFile[] {
+                    new MappingFile(MappingFile.MappingType.CLASS, new File(mappingsDir, buildDataInfo.getClassMappings())),
+                    new MappingFile(MappingFile.MappingType.MEMBERS, new File(mappingsDir, buildDataInfo.getMemberMappings())),
+                    new MappingFile(MappingFile.MappingType.PACKAGE, new File(mappingsDir, buildDataInfo.getPackageMappings()))
                 };
             }
         }
@@ -115,11 +114,12 @@ public class SpigotMappingsDownloader {
 
         BuildDataInfo buildDataInfo = gson.fromJson(infoData, BuildDataInfo.class);
 
-        File[] mappings = new File[4];
-        mappings[0] = new File(mappingsDir, buildDataInfo.getClassMappings());
-        mappings[1] = new File(mappingsDir, buildDataInfo.getMemberMappings());
-        mappings[2] = new File(mappingsDir, buildDataInfo.getPackageMappings());
-        mappings[3] = new File(mappingsDir, buildDataInfo.getAccessTransforms());
+        MappingFile[] mappings = new MappingFile[] {
+            new MappingFile(MappingFile.MappingFileType.CSRG, MappingFile.MappingType.CLASS, new File(mappingsDir, buildDataInfo.getClassMappings())),              
+            new MappingFile(MappingFile.MappingFileType.CSRG, MappingFile.MappingType.MEMBERS, new File(
+mappingsDir, buildDataInfo.getMemberMappings())),
+            new MappingFile(MappingFile.MappingFileType.CSRG, MappingFile.MappingType.PACKAGE, new File(mappingsDir, buildDataInfo.getPackageMappings()))
+        };
         return mappings;
     }
 
