@@ -1,4 +1,4 @@
-package io.github.spigotcvn.spigotmappingsdownloader;
+package io.github.spigotcvn.smdownloader;
 
 import java.io.File;
 
@@ -35,7 +35,8 @@ public class MappingFile {
         TINY("tiny"),
 
         SRG("srg"),
-        CSRG("csrg");
+        CSRG("csrg"),
+        PROGUARD("txt"); // mojang proguard mappigns are shippe in txt
 
         private String fileExtension;
 
@@ -49,6 +50,7 @@ public class MappingFile {
 
         public static MappingFileType getByName(String fileName) {
             for(MappingFileType type : values()) {
+                if(type.getFileExtension() == null) continue;
                 if(fileName.endsWith("." + type.getFileExtension())) {
                     return type;
                 }
