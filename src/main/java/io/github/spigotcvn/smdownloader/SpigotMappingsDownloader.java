@@ -65,7 +65,6 @@ public class SpigotMappingsDownloader {
         if(deleteIfExists) {
             if(buildDataDir.exists() && buildDataDir.isDirectory()) {
                 deleteFiles(buildDataDir);
-                pullBuildDataGit(buildDataDir, versionData.getRefs().getBuildData());
             }
         }
 
@@ -200,14 +199,6 @@ public class SpigotMappingsDownloader {
         }
 
         return connection.getInputStream();
-    }
-
-    private void downloadFile(URL url, File result) {
-        try(InputStream input = url.openStream()) {
-            downloadFile(input, result);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     private void downloadFile(InputStream input, File result) {

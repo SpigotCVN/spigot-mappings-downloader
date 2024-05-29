@@ -11,19 +11,18 @@ public class Main {
         parser.accepts("mojang").withOptionalArg();
 
         OptionSet options = parser.parse(args);
-        String version = (String)options.valueOf("version");
-        boolean generateSpigotMappings = options.has("spigot");
-        boolean generateMojangMappings = options.has("mojang");
+        String version = (String) options.valueOf("version");
+        boolean downloadSpigotMappings = options.has("spigot");
+        boolean downloadMojangMappings = options.has("mojang");
 
         SpigotMappingsDownloader mappinger = new SpigotMappingsDownloader(version);
-        if(generateSpigotMappings) {
+        if(downloadSpigotMappings) {
             System.out.println("Downloading Spigot mappings for version " + version);
 
             try {
-                System.out.println(mappinger.getVersionData().toString());
+                mappinger.getVersionData();
             } catch (IllegalArgumentException e) {
-                System.out.println("Invalid version: " + version);
-                return;
+                throw new IllegalArgumentException("Invalid version: " + version);
             }
 
             for (MappingFile file : mappinger.downloadMappings(false)) {
@@ -35,7 +34,7 @@ public class Main {
             }
         }
 
-        if(generateMojangMappings) {
+        if(downloadMojangMappings) {
             System.out.println("Downloading Mojang mappings for version " + version);
             MappingFile mojmaps = mappinger.downloadMojangMappings(false);
             if(mojmaps != null) {
