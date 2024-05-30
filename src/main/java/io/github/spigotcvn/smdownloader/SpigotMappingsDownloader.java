@@ -74,6 +74,25 @@ public class SpigotMappingsDownloader {
     }
 
     /**
+     * Checks if the specified version has mojang mappings.
+     * @return True if the version has mojang mappings, false otherwise.
+     */
+    public boolean hasMojangMappings() {
+        VersionData versionData = getVersionData();
+        if(versionData == null) {
+            return false;
+        }
+
+        File infoFile = new File(buildDataDir, "info.json");
+        if(!infoFile.exists()) {
+            return false;
+        }
+
+        BuildDataInfo buildDataInfo = gson.fromJson(IOUtils.readFromFile(infoFile), BuildDataInfo.class);
+        return buildDataInfo.getMappingsUrl() != null;
+    }
+
+    /**
      * Downloads the version data for the specified version.
      * @return The version data object for the specified version.
      * @throws IllegalArgumentException If the version is invalid.#
@@ -246,14 +265,16 @@ public class SpigotMappingsDownloader {
                 .filter(m -> m.getType() == MappingFile.MappingType.MEMBERS)
                 .findFirst()
                 .orElse(null);
-        if(memberMappings == null) {
+        if(memberMappings == null && hasMojangMappings()) {
             memberMappings = generateMemberMappings(mapUtil, deleteRepoIfExists);
         }
         if(memberMappings == null) {
             return null;
         }
 
-        generateFieldMappings(mapUtil, deleteRepoIfExists);
+        if(hasMojangMappings()) {
+            generateFieldMappings(mapUtil, deleteRepoIfExists);
+        }
 
         File combinedMappings = new File(buildDataDir, "spigot-" + rev + "-combined.csrg");
 

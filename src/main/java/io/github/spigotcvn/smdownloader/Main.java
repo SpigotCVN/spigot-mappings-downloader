@@ -59,6 +59,11 @@ public class Main {
 
         if(downloadMojangMappings) {
             System.out.println("Downloading Mojang mappings for version " + version);
+
+            if(!mappinger.hasMojangMappings()) {
+                throw new IllegalArgumentException("Mojang mappings are not available for version: " + version);
+            }
+
             MappingFile mojmaps = mappinger.downloadMojangMappings(false);
             if(mojmaps != null) {
                 System.out.println(mojmaps.getFileType());
