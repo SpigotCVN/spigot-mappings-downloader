@@ -21,7 +21,7 @@ import java.util.List;
 
 public class SpigotMappingsDownloader {
     private static final String VERSIONS_URL = "https://hub.spigotmc.org/versions/%s.json";
-    public static final String BUILDDATA_REPO = "https://hub.spigotmc.org/stash/scm/spigot/builddata.git";
+    private static final String BUILDDATA_REPO = "https://hub.spigotmc.org/stash/scm/spigot/builddata.git";
 
     private File buildDataDir;
     private String rev;
