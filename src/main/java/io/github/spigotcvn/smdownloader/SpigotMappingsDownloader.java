@@ -242,10 +242,6 @@ public class SpigotMappingsDownloader {
         if(mappings == null) {
             return null;
         }
-        MappingFile mojmaps = downloadMojangMappings(deleteRepoIfExists);
-        if(mojmaps == null) {
-            return null;
-        }
 
         MappingFile classMappings = mappings.stream()
                 .filter(m -> m.getType() == MappingFile.MappingType.CLASS)
