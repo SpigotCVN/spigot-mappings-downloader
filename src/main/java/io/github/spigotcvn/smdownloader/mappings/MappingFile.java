@@ -1,4 +1,4 @@
-package io.github.spigotcvn.smdownloader;
+package io.github.spigotcvn.smdownloader.mappings;
 
 import java.io.File;
 
@@ -38,7 +38,7 @@ public class MappingFile {
         CSRG("csrg"),
         PROGUARD("txt"); // mojang proguard mappigns are shippe in txt
 
-        private String fileExtension;
+        private final String fileExtension;
 
         MappingFileType(String fileExtension) {
             this.fileExtension = fileExtension;

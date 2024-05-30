@@ -11,4 +11,3 @@ plugins {
 }
 
 rootProject.name = 'spigot-mapping-downloader'
-include('app', 'list', 'utilities')

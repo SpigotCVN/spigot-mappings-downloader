@@ -1,27 +1,50 @@
 package io.github.spigotcvn.smdownloader;
 
+import io.github.spigotcvn.smdownloader.mappings.MappingFile;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
+
+import java.io.File;
 
 public class Main {
     public static void main(String[] args) {
         OptionParser parser = new OptionParser();
+        parser.allowsUnrecognizedOptions();
+
+        parser.accepts("help").forHelp();
         parser.accepts("version").withRequiredArg().required();
         parser.accepts("spigot").withOptionalArg();
         parser.accepts("mojang").withOptionalArg();
+        parser.accepts("generate-combined").withOptionalArg();
+        parser.accepts("dir").withOptionalArg().defaultsTo("builddata-{rev}");
 
         OptionSet options = parser.parse(args);
+        if(options.has("help")) {
+            System.out.println("Usage: java -jar SpigotMappingDownloader.jar [options]");
+            System.out.println("Options:");
+            System.out.println("  --help               Show this help message");
+            System.out.println("  --version <version>  The version of the mappings to download");
+            System.out.println("  --spigot             Download Spigot mappings");
+            System.out.println("  --mojang             Download Mojang mappings, will error if the version is not available");
+            System.out.println("  --generate-combined  Generate combined spigot mappings");
+            System.out.println("  --dir <dir>          The directory to download the mappings to");
+            System.out.println("                       You can use {rev} to insert the version");
+            System.out.println("                       Default: builddata-{rev}");
+            return;
+        }
+
         String version = (String) options.valueOf("version");
+        String dir = ((String) options.valueOf("dir")).replaceAll("\\{rev}", version);
+
         boolean downloadSpigotMappings = options.has("spigot");
         boolean downloadMojangMappings = options.has("mojang");
+        boolean generateCombined = options.has("generate-combined");
 
-        SpigotMappingsDownloader mappinger = new SpigotMappingsDownloader(version);
+        SpigotMappingsDownloader mappinger = new SpigotMappingsDownloader(new File(dir), version);
         if(downloadSpigotMappings) {
             System.out.println("Downloading Spigot mappings for version " + version);
 
-            try {
-                mappinger.getVersionData();
-            } catch (IllegalArgumentException e) {
+            if(!mappinger.isVersionValid()) {
                 throw new IllegalArgumentException("Invalid version: " + version);
             }
 
@@ -45,5 +68,19 @@ public class Main {
                 System.out.println("Mojmaps is null");
             }
         }
+        System.out.println();
+
+        if(generateCombined) {
+            System.out.println("Generating combined mappings for version " + version);
+            MappingFile combined = mappinger.generateCombinedMappings(false);
+            if(combined != null) {
+                System.out.println(combined.getFileType());
+                System.out.println(combined.getType());
+                System.out.println(combined.getFile().getName());
+            } else {
+                System.out.println("Combined is null");
+            }
+        }
+        System.out.println();
     }
 }

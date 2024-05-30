@@ -2,8 +2,12 @@ package io.github.spigotcvn.smdownloader;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.github.spigotcvn.smdownloader.io.HTTPNotOkException;
+import io.github.spigotcvn.smdownloader.io.IOUtils;
 import io.github.spigotcvn.smdownloader.json.BuildDataInfo;
 import io.github.spigotcvn.smdownloader.json.VersionData;
+import io.github.spigotcvn.smdownloader.mappings.MapUtil;
+import io.github.spigotcvn.smdownloader.mappings.MappingFile;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.RefSpec;
@@ -19,6 +23,7 @@ public class SpigotMappingsDownloader {
     private static final String VERSIONS_URL = "https://hub.spigotmc.org/versions/%s.json";
     public static final String BUILDDATA_REPO = "https://hub.spigotmc.org/stash/scm/spigot/builddata.git";
 
+    private File buildDataDir;
     private String rev;
     private VersionData versionInfo;
     private Git gitClient;
@@ -26,12 +31,53 @@ public class SpigotMappingsDownloader {
             .setPrettyPrinting()
             .create();
 
+    /**
+     * Creates a new SpigotMappingsDownloader object.
+     * If you want to define a custom buildDataDir, use {@link #SpigotMappingsDownloader(File, String)}.
+     * @param rev The version to download mappings for.
+     */
     public SpigotMappingsDownloader(String rev) {
+        this(null, rev);
+    }
+
+    /**
+     * Creates a new SpigotMappingsDownloader object.
+     * @param buildDataDir The directory to clone the builddata git repository to.
+     *                     This is also the directory inside which all operations will be performed.
+     *                     Defaults to ./builddata-{rev}
+     * @param rev The version to download mappings for.
+     */
+    public SpigotMappingsDownloader(File buildDataDir, String rev) {
+        this.buildDataDir = buildDataDir;
+        if(buildDataDir == null) {
+            this.buildDataDir = new File("builddata-" + rev);
+        }
         this.rev = rev;
         this.versionInfo = null;
         this.gitClient = null;
     }
 
+    /**
+     * Checks if the specified version is valid.
+     * @return True if the version is valid, false otherwise.
+     */
+    public boolean isVersionValid() {
+        try {
+            URL downloadUrl = new URL(String.format(VERSIONS_URL, rev));
+            HttpURLConnection connection = (HttpURLConnection) downloadUrl.openConnection();
+            connection.setRequestMethod("GET");
+
+            return connection.getResponseCode() == HttpURLConnection.HTTP_OK;
+        } catch(IOException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Downloads the version data for the specified version.
+     * @return The version data object for the specified version.
+     * @throws IllegalArgumentException If the version is invalid.#
+     */
     public VersionData getVersionData() throws IllegalArgumentException {
         if(versionInfo == null) {
             URL downloadUrl;
@@ -42,10 +88,16 @@ public class SpigotMappingsDownloader {
             }
 
             ByteArrayOutputStream downloadedInfoStream = new ByteArrayOutputStream();
-            try(InputStream inputStream = getVersionDownloadInputStream(downloadUrl)) {
-                downloadFile(inputStream, downloadedInfoStream);
+            try(InputStream inputStream = IOUtils.getDownloadinputStream(downloadUrl)) {
+                IOUtils.downloadFile(inputStream, downloadedInfoStream);
             } catch(IOException e) {
+                if(e instanceof HTTPNotOkException) {
+                    HTTPNotOkException httpException = (HTTPNotOkException) e;
+                    if(httpException.getErrorCode() == HttpURLConnection.HTTP_NOT_FOUND)
+                        throw new IllegalArgumentException("Invalid version: " + rev);
+                }
                 e.printStackTrace();
+                return null;
             }
 
             versionInfo = gson.fromJson(downloadedInfoStream.toString(), VersionData.class);
@@ -53,23 +105,29 @@ public class SpigotMappingsDownloader {
         return versionInfo;
     }
 
+    /**
+     * Downloads spigot mappings for the specified version.
+     * That is achieved by cloning the builddata git repository and checking out the specified version.
+     * @param deleteIfExists If true, it will delete the existing builddata directory
+     *                       and clone the repository again.
+     * @return A list of mapping files for the specified version.
+     */
     public List<MappingFile> downloadMappings(boolean deleteIfExists) {
         VersionData versionData = getVersionData();
         if(versionData == null) {
             return null;
         }
 
-        File buildDataDir = new File("./builddata-" + rev);
         File mappingsDir = new File(buildDataDir, "mappings");
 
         if(deleteIfExists) {
             if(buildDataDir.exists() && buildDataDir.isDirectory()) {
-                deleteFiles(buildDataDir);
+                IOUtils.deleteDirectory(buildDataDir);
             }
         }
 
         if(!buildDataDir.exists()) {
-            pullBuildDataGit(buildDataDir, versionData.getRefs().getBuildData());
+            pullBuildDataGit(versionData.getRefs().getBuildData());
         }
 
         File infoFile = new File(buildDataDir, "info.json");
@@ -77,7 +135,7 @@ public class SpigotMappingsDownloader {
             return null;
         }
 
-        String infoData = readFromFile(infoFile);
+        String infoData = IOUtils.readFromFile(infoFile);
 
         BuildDataInfo buildDataInfo = gson.fromJson(infoData, BuildDataInfo.class);
         List<MappingFile> mappingFiles = new ArrayList<>();
@@ -96,13 +154,20 @@ public class SpigotMappingsDownloader {
         return mappingFiles;
     }
 
+    /**
+     * Downloads mojang mappings for the specified version.
+     * That is achieved by cloning the builddata git repository and checking out the specified version.
+     * The info.json file in the builddata git repo has the needed mappings url for that version.
+     * @param deleteRepoIfExists If true, it will delete the existing builddata directory
+     *                           and clone the repository again.
+     * @return A mapping file for the specified version.
+     */
     public MappingFile downloadMojangMappings(boolean deleteRepoIfExists) {
         VersionData versionData = getVersionData();
         if(versionData == null) {
             return null;
         }
 
-        File buildDataDir = new File("./builddata-" + rev);
         File infoFile = new File(buildDataDir, "info.json");
         if(!infoFile.exists()) {
             return null;
@@ -110,22 +175,22 @@ public class SpigotMappingsDownloader {
 
         if(deleteRepoIfExists) {
             if (buildDataDir.exists() && buildDataDir.isDirectory()) {
-                deleteFiles(buildDataDir);
+                IOUtils.deleteDirectory(buildDataDir);
             }
         }
 
         if(!buildDataDir.exists()) {
-            pullBuildDataGit(buildDataDir, versionData.getRefs().getBuildData());
+            pullBuildDataGit(versionData.getRefs().getBuildData());
         }
 
-        BuildDataInfo buildDataInfo = gson.fromJson(readFromFile(infoFile), BuildDataInfo.class);
+        BuildDataInfo buildDataInfo = gson.fromJson(IOUtils.readFromFile(infoFile), BuildDataInfo.class);
         if(buildDataInfo.getMappingsUrl() == null) throw new IllegalArgumentException("No mojang mappings available for version " + rev);
 
         File mojmaps = new File(buildDataDir, "mojmaps.txt");
         URL url;
         try {
             url = new URL(buildDataInfo.getMappingsUrl());
-            downloadFile(url.openStream(), mojmaps);
+            IOUtils.downloadFile(url.openStream(), mojmaps);
 
             return new MappingFile(
                     MappingFile.MappingFileType.PROGUARD,
@@ -139,7 +204,185 @@ public class SpigotMappingsDownloader {
         return null;
     }
 
-    public void pullBuildDataGit(File buildDataDir, String revHash) {
+    public MappingFile generateCombinedMappings(boolean deleteRepoIfExists) {
+        VersionData versionData = getVersionData();
+        if(versionData == null) {
+            return null;
+        }
+
+        MapUtil mapUtil = new MapUtil();
+
+        List<MappingFile> mappings = downloadMappings(deleteRepoIfExists);
+        if(mappings == null) {
+            return null;
+        }
+        MappingFile mojmaps = downloadMojangMappings(deleteRepoIfExists);
+        if(mojmaps == null) {
+            return null;
+        }
+
+        MappingFile classMappings = mappings.stream()
+                .filter(m -> m.getType() == MappingFile.MappingType.CLASS)
+                .findFirst()
+                .orElse(null);
+        if(classMappings == null) {
+            return null;
+        }
+        try {
+            mapUtil.loadBuk(classMappings.getFile());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        MappingFile memberMappings = mappings.stream()
+                .filter(m -> m.getType() == MappingFile.MappingType.MEMBERS)
+                .findFirst()
+                .orElse(null);
+        if(memberMappings == null) {
+            memberMappings = generateMemberMappings(mapUtil, deleteRepoIfExists);
+        }
+        if(memberMappings == null) {
+            return null;
+        }
+
+        generateFieldMappings(mapUtil, deleteRepoIfExists);
+
+        File combinedMappings = new File(buildDataDir, "spigot-" + rev + "-combined.csrg");
+
+        try {
+            mapUtil.makeCombinedMaps(combinedMappings, memberMappings.getFile());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        return new MappingFile(
+                MappingFile.MappingType.COMBINED,
+                combinedMappings
+        );
+    }
+
+    public MappingFile generateMemberMappings(boolean deleteRepoIfExists) {
+        MapUtil mapUtil = new MapUtil();
+        List<MappingFile> mappings = downloadMappings(deleteRepoIfExists);
+        if(mappings == null) {
+            return null;
+        }
+
+        MappingFile classMappings = mappings.stream()
+                .filter(m -> m.getType() == MappingFile.MappingType.CLASS)
+                .findFirst()
+                .orElse(null);
+        if(classMappings == null) {
+            return null;
+        }
+
+        return generateMemberMappings(mapUtil, deleteRepoIfExists);
+    }
+
+    public MappingFile generateFieldMappings(boolean deleteRepoIfExists) {
+        MapUtil mapUtil = new MapUtil();
+        List<MappingFile> mappings = downloadMappings(deleteRepoIfExists);
+        if(mappings == null) {
+            return null;
+        }
+
+        MappingFile classMappings = mappings.stream()
+                .filter(m -> m.getType() == MappingFile.MappingType.CLASS)
+                .findFirst()
+                .orElse(null);
+        if(classMappings == null) {
+            return null;
+        }
+
+        try {
+            mapUtil.loadBuk(classMappings.getFile());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        return generateFieldMappings(mapUtil, deleteRepoIfExists);
+    }
+
+    public MappingFile generateMemberMappings(MapUtil mapUtil, boolean deleteRepoIfExists) {
+        VersionData versionData = getVersionData();
+        if(versionData == null) {
+            return null;
+        }
+
+        MappingFile mojmaps = downloadMojangMappings(deleteRepoIfExists);
+        if(mojmaps == null) {
+            return null;
+        }
+
+        List<MappingFile> mappings = downloadMappings(deleteRepoIfExists);
+        if(mappings == null) {
+            return null;
+        }
+
+        MappingFile memberMappings = mappings.stream()
+                .filter(m -> m.getType() == MappingFile.MappingType.MEMBERS)
+                .findFirst()
+                .orElse(null);
+        if(memberMappings == null) {
+            try {
+                File members = new File(buildDataDir, "spigot-" + rev + "-members.csrg");
+                mapUtil.makeFieldMaps(mojmaps.getFile(), members, true);
+                memberMappings = new MappingFile(
+                        MappingFile.MappingType.MEMBERS,
+                        members
+                );
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.out.println("Caught exception");
+                return null;
+            }
+        }
+
+        return memberMappings;
+    }
+
+    /**
+     * Generates field mappings for the specified version.
+     * @param deleteRepoIfExists If true, it will delete the existing builddata directory
+     * @return A mapping file for the specified version.
+     */
+    public MappingFile generateFieldMappings(MapUtil mapUtil, boolean deleteRepoIfExists) {
+        VersionData versionData = getVersionData();
+        if(versionData == null) {
+            return null;
+        }
+
+        List<MappingFile> mappings = downloadMappings(deleteRepoIfExists);
+        if(mappings == null) {
+            return null;
+        }
+        MappingFile mojmaps = downloadMojangMappings(deleteRepoIfExists);
+        if(mojmaps == null) {
+            return null;
+        }
+
+        File fieldMappings = new File(buildDataDir, "spigot-" + rev + "-fields.csrg");
+        try {
+            mapUtil.makeFieldMaps(mojmaps.getFile(), fieldMappings, false);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        return new MappingFile(
+                MappingFile.MappingType.FIELDS,
+                fieldMappings
+        );
+    }
+
+    /**
+     * Clones the builddata git repository and checks out the specified revision hash.
+     * @param revHash The revision hash to checkout.
+     */
+    public void pullBuildDataGit(String revHash) {
         if(gitClient == null) {
             try {
                 this.gitClient = Git.cloneRepository()
@@ -161,63 +404,6 @@ public class SpigotMappingsDownloader {
                     .setName(revHash)
                     .call();
         } catch(Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void deleteFiles(File file) {
-        if(file.isDirectory()) {
-            for(File f : file.listFiles()) {
-                deleteFiles(f);
-            }
-        }
-        file.delete();
-    }
-
-    private String readFromFile(File file) {
-        String infoData;
-        try(BufferedInputStream infoStream = new BufferedInputStream(new FileInputStream(file))) {
-            byte[] buffer = new byte[infoStream.available()];
-            infoStream.read(buffer);
-            infoData = new String(buffer);
-        } catch(IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-        return infoData;
-    }
-
-    private InputStream getVersionDownloadInputStream(URL downloadUrl) throws IOException {
-        HttpURLConnection connection = (HttpURLConnection) downloadUrl.openConnection();
-        connection.setRequestMethod("GET");
-
-        int responseCode = connection.getResponseCode();
-        if(responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
-            throw new IllegalArgumentException("Invalid version: " + rev);
-        } else if(responseCode != HttpURLConnection.HTTP_OK) {
-            throw new IOException("Failed to download version info: " + responseCode);
-        }
-
-        return connection.getInputStream();
-    }
-
-    private void downloadFile(InputStream input, File result) {
-        try(OutputStream output = new FileOutputStream(result)) {
-            downloadFile(input, output);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void downloadFile(InputStream input, OutputStream output) {
-        try {
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = input.read(buffer)) != -1) {
-                output.write(buffer, 0, bytesRead);
-            }
-            output.flush();
-        } catch (IOException e) {
             e.printStackTrace();
         }
     }
