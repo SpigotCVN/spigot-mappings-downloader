@@ -160,7 +160,7 @@ public class SpigotMappingsDownloader {
      * The info.json file in the builddata git repo has the needed mappings url for that version.
      * @param deleteRepoIfExists If true, it will delete the existing builddata directory
      *                           and clone the repository again.
-     * @return A mapping file for the specified version.
+     * @return The downloaded mojang mapping file.
      */
     public MappingFile downloadMojangMappings(boolean deleteRepoIfExists) {
         VersionData versionData = getVersionData();
@@ -204,6 +204,13 @@ public class SpigotMappingsDownloader {
         return null;
     }
 
+    /**
+     * Generates combined mappings for the specified version.
+     * Combined mappings are mappings that contain both class and member mappings.
+     * Usually used for remapping.
+     * @param deleteRepoIfExists If true, it will delete the existing builddata directory
+     * @return The generated combined mapping file.
+     */
     public MappingFile generateCombinedMappings(boolean deleteRepoIfExists) {
         VersionData versionData = getVersionData();
         if(versionData == null) {
@@ -263,6 +270,12 @@ public class SpigotMappingsDownloader {
         );
     }
 
+    /**
+     * Generates member mappings for the specified version.
+     * Member mappings are not shipped with the spigot mappings from some version, so we have to generate them.
+     * @param deleteRepoIfExists If true, it will delete the existing builddata directory
+     * @return The generated member mapping file.
+     */
     public MappingFile generateMemberMappings(boolean deleteRepoIfExists) {
         MapUtil mapUtil = new MapUtil();
         List<MappingFile> mappings = downloadMappings(deleteRepoIfExists);
@@ -281,6 +294,12 @@ public class SpigotMappingsDownloader {
         return generateMemberMappings(mapUtil, deleteRepoIfExists);
     }
 
+    /**
+     * Generates field mappings for the specified version.
+     * Field mappings are and have never been shipped with the spigot mappings, so we have to generate them.
+     * @param deleteRepoIfExists If true, it will delete the existing builddata directory
+     * @return The generated field mapping file.
+     */
     public MappingFile generateFieldMappings(boolean deleteRepoIfExists) {
         MapUtil mapUtil = new MapUtil();
         List<MappingFile> mappings = downloadMappings(deleteRepoIfExists);
@@ -306,6 +325,14 @@ public class SpigotMappingsDownloader {
         return generateFieldMappings(mapUtil, deleteRepoIfExists);
     }
 
+    /**
+     * Generates member mappings for the specified version.
+     * Member mappings are not shipped with the spigot mappings from some version, so we have to generate them.
+     * @param mapUtil The map util object to use for generating the mappings,
+     *                it is expected to have the class mappings loaded.
+     * @param deleteRepoIfExists If true, it will delete the existing builddata directory
+     * @return The generated member mapping file.
+     */
     public MappingFile generateMemberMappings(MapUtil mapUtil, boolean deleteRepoIfExists) {
         VersionData versionData = getVersionData();
         if(versionData == null) {
@@ -346,8 +373,11 @@ public class SpigotMappingsDownloader {
 
     /**
      * Generates field mappings for the specified version.
+     * Field mappings are and have never been shipped with the spigot mappings, so we have to generate them.
+     * @param mapUtil The map util object to use for generating the mappings,
+     *                it is expected to have the class mappings loaded.
      * @param deleteRepoIfExists If true, it will delete the existing builddata directory
-     * @return A mapping file for the specified version.
+     * @return The generated field mapping file.
      */
     public MappingFile generateFieldMappings(MapUtil mapUtil, boolean deleteRepoIfExists) {
         VersionData versionData = getVersionData();
@@ -380,6 +410,7 @@ public class SpigotMappingsDownloader {
 
     /**
      * Clones the builddata git repository and checks out the specified revision hash.
+     * The repository is cloned to the directory specified in the constructor.
      * @param revHash The revision hash to checkout.
      */
     public void pullBuildDataGit(String revHash) {
@@ -406,5 +437,13 @@ public class SpigotMappingsDownloader {
         } catch(Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public File getBuildDataDir() {
+        return buildDataDir;
+    }
+
+    public String getRev() {
+        return rev;
     }
 }

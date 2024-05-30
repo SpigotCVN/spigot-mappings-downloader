@@ -30,7 +30,7 @@ public class Main {
             System.out.println("  --dir <dir>          The directory to download the mappings to");
             System.out.println("                       You can use {rev} to insert the version");
             System.out.println("                       Default: builddata-{rev}");
-            return;
+            System.exit(0);
         }
 
         String version = (String) options.valueOf("version");
