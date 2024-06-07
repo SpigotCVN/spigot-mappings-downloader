@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'com.github.johnrengelman.shadow' version '8.0.0+'
+    id 'maven-publish'
 }
 
 group = "io.github.spigotcvn"
@@ -8,6 +9,7 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 dependencies {
@@ -17,10 +19,21 @@ dependencies {
     implementation 'com.google.guava:guava:33.2.0-jre'
 }
 
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
 jar {
     finalizedBy shadowJar
 
     manifest {
         attributes 'Main-Class': 'io.github.spigotcvn.smdownloader.Main'
     }
+
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
