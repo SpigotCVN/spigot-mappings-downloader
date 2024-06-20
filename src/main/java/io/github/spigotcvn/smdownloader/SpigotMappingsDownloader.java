@@ -19,7 +19,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SpigotMappingsDownloader {
+public class SpigotMappingsDownloader implements AutoCloseable {
     private static final String VERSIONS_URL = "https://hub.spigotmc.org/versions/%s.json";
     private static final String BUILDDATA_REPO = "https://hub.spigotmc.org/stash/scm/spigot/builddata.git";
 
@@ -462,5 +462,12 @@ public class SpigotMappingsDownloader {
 
     public String getRev() {
         return rev;
+    }
+
+    @Override
+    public void close() throws Exception {
+        if(gitClient != null) {
+            gitClient.close();
+        }
     }
 }
