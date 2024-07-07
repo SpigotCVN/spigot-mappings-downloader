@@ -13,10 +13,10 @@ public class Main {
 
         parser.accepts("help").forHelp();
         parser.accepts("version").withRequiredArg().required();
-        parser.accepts("spigot").withOptionalArg();
-        parser.accepts("mojang").withOptionalArg();
-        parser.accepts("generate-combined").withOptionalArg();
-        parser.accepts("dir").withOptionalArg().defaultsTo("builddata-{rev}");
+        parser.accepts("spigot");
+        parser.accepts("mojang");
+        parser.accepts("generate-combined");
+        parser.accepts("dir").withRequiredArg().defaultsTo("builddata-{rev}");
 
         OptionSet options = parser.parse(args);
         if(options.has("help")) {
