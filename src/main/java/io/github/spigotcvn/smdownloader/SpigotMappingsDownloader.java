@@ -27,6 +27,7 @@ public class SpigotMappingsDownloader implements AutoCloseable {
     private String rev;
     private VersionData versionInfo;
     private Git gitClient;
+    private String repo;
     private final Gson gson = new GsonBuilder()
             .setPrettyPrinting()
             .create();
@@ -37,7 +38,7 @@ public class SpigotMappingsDownloader implements AutoCloseable {
      * @param rev The version to download mappings for.
      */
     public SpigotMappingsDownloader(String rev) {
-        this(null, rev);
+        this(null, rev, BUILDDATA_REPO);
     }
 
     /**
@@ -48,6 +49,18 @@ public class SpigotMappingsDownloader implements AutoCloseable {
      * @param rev The version to download mappings for.
      */
     public SpigotMappingsDownloader(File buildDataDir, String rev) {
+        this(buildDataDir, rev, BUILDDATA_REPO);
+    }
+
+    /**
+     * Creates a new SpigotMappingsDownloader object.
+     * @param buildDataDir The directory to clone the builddata git repository to.
+     *                     This is also the directory inside which all operations will be performed.
+     *                     Defaults to ./builddata-{rev}
+     * @param rev The version to download mappings for.
+     * @param repo The URL of the builddata git repository.
+     */
+    public SpigotMappingsDownloader(File buildDataDir, String rev, String repo) {
         this.buildDataDir = buildDataDir;
         if(buildDataDir == null) {
             this.buildDataDir = new File("builddata-" + rev);
@@ -55,6 +68,7 @@ public class SpigotMappingsDownloader implements AutoCloseable {
         this.rev = rev;
         this.versionInfo = null;
         this.gitClient = null;
+        this.repo = repo;
     }
 
     /**
@@ -434,7 +448,7 @@ public class SpigotMappingsDownloader implements AutoCloseable {
         if(gitClient == null) {
             try {
                 this.gitClient = Git.cloneRepository()
-                        .setURI(BUILDDATA_REPO)
+                        .setURI(repo)
                         .setDirectory(buildDataDir)
                         .call();
             } catch (GitAPIException e) {
