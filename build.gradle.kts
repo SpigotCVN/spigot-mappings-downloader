@@ -32,6 +32,15 @@ tasks.jar {
     }
 }
 
+tasks.compileJava {
+    // Set the target and source java version to java 8
+    JavaVersion.VERSION_1_8.toString().also {
+        targetCompatibility = it
+        sourceCompatibility = it
+    }
+    options.encoding = "UTF-8"
+}
+
 publishing {
     publications {
         create<MavenPublication>("mavenJava") {
